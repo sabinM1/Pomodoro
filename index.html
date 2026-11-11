@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A minimal, dependency-free Pomodoro timer with automatic breaks, editable timers, background images and a small cat companion.">
+  <title>Focus Timer</title>
+  <!-- 🌴 is right for a stopped timer; script.js swaps in 🗿 while focus is running -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌴</text></svg>">
+  <link rel="preload" as="image" href="assets/backgrounds/night.webp" fetchpriority="high">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-bg="night">
+
+  <button type="button" class="icon-btn" id="open-settings" aria-label="Open settings">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>
+    </svg>
+  </button>
+
+  <button type="button" class="icon-btn bottom" id="fullscreen" data-active="false" aria-label="Toggle fullscreen">
+    <svg class="fs-enter" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>
+    </svg>
+    <svg class="fs-exit" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>
+    </svg>
+  </button>
+
+  <main>
+    <h1 class="sr-only">Focus Timer</h1>
+    <div class="modes" role="group" aria-label="Timer mode">
+      <button type="button" class="mode" data-mode="study" aria-pressed="true">Focus</button>
+      <button type="button" class="mode" data-mode="short" aria-pressed="false">Short break</button>
+      <button type="button" class="mode" data-mode="long" aria-pressed="false">Long break</button>
+    </div>
+
+    <div class="stage">
+      <div class="time" id="time" role="timer" title="Double-click to edit">25:00</div>
+      <div class="suggest-box">
+        <button type="button" class="small" id="suggest" hidden>Suggest break</button>
+        <span class="suggest-note" id="suggest-note" role="status" hidden></span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button type="button" class="btn primary" id="toggle">Start</button>
+      <button type="button" class="btn ghost" id="reset" title="Click: rewind · Double-click: restore default times">Reset</button>
+    </div>
+    <p class="tip" id="tip">Breaks start on their own, after every 4th focus round comes a long break. Double-click the clock to edit the timers, double-click <i>Reset</i> to restore the defaults.</p>
+  </main>
+
+  <dialog id="settings" aria-labelledby="settings-title">
+    <form method="dialog" class="panel">
+      <h2 id="settings-title">Settings</h2>
+      <p class="hint top">Times are set on the main screen: switch to a mode, then double-click its clock.</p>
+
+      <fieldset>
+        <legend>Alarm sound</legend>
+        <div class="row">
+          <select id="sound" aria-label="Alarm sound">
+            <option value="bell">Bell</option>
+            <option value="gong">Soft gong</option>
+            <option value="chime">Chime</option>
+            <option value="harp">Harp</option>
+            <option value="wood">Wood block</option>
+            <option value="beep">Digital beep</option>
+          </select>
+          <button type="button" class="small" id="preview">Play</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Background</legend>
+        <div class="swatches">
+          <label class="swatch" data-bg="starry" title="Starry Night"><input type="radio" name="bg" value="starry" aria-label="Starry Night"></label>
+          <label class="swatch" data-bg="earth"  title="Blue Marble"><input type="radio" name="bg" value="earth" aria-label="Blue Marble"></label>
+          <label class="swatch" data-bg="peaks"  title="The Tetons"><input type="radio" name="bg" value="peaks" aria-label="The Tetons"></label>
+          <label class="swatch" data-bg="forest" title="Rainforest"><input type="radio" name="bg" value="forest" aria-label="Rainforest"></label>
+          <label class="swatch" data-bg="shore"  title="Rose Atoll"><input type="radio" name="bg" value="shore" aria-label="Rose Atoll"></label>
+          <label class="swatch" data-bg="field"  title="Wheat Field"><input type="radio" name="bg" value="field" aria-label="Wheat Field"></label>
+          <label class="swatch" data-bg="night"  title="Aurora"><input type="radio" name="bg" value="night" aria-label="Aurora"></label>
+          <label class="swatch" data-bg="dunes"  title="Sand Dunes, 1870s"><input type="radio" name="bg" value="dunes" aria-label="Sand Dunes"></label>
+          <label class="swatch" data-bg="lake"   title="Lake Tahoe from orbit"><input type="radio" name="bg" value="lake" aria-label="Lake Tahoe from orbit"></label>
+          <label class="swatch" data-bg="meadow" title="California Poppies"><input type="radio" name="bg" value="meadow" aria-label="California Poppies"></label>
+          <label class="swatch" data-bg="winter" title="Snowy Mountain"><input type="radio" name="bg" value="winter" aria-label="Snowy Mountain"></label>
+          <label class="swatch" data-bg="moon"   title="Moon over Earth"><input type="radio" name="bg" value="moon" aria-label="Moon over Earth"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cat color</legend>
+        <div class="row">
+          <select id="cat-color" aria-label="Cat color">
+            <option value="default">Ginger</option>
+            <option value="black">Black</option>
+            <option value="white">White</option>
+            <option value="transparent">Hidden - cat will be sad :(</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <button class="btn primary done">Done</button>
+      <p class="hint center">This site uses cookies only to remember your timer settings. No trackers and no ads, always free.</p>
+    </form>
+  </dialog>
+
+  <script src="cat.js" defer></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
